@@ -43,3 +43,6 @@ public/uploads/    업로드된 이미지·동영상
 
 ## 테스트 계정
 - 아이디 `seller01` / 비밀번호 `test1234`
+
+## 라이선스
+[MIT](LICENSE) © 2026 Jinanalyst
