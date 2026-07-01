@@ -10,7 +10,9 @@ const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const UPLOAD_DIR = path.join(__dirname, 'public', 'uploads');
+// 업로드 저장 위치: DATA_DIR(영구 디스크) 하위에 저장 → 재배포에도 파일 유지
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 // 원룸/자취 관련 카테고리
@@ -28,6 +30,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(UPLOAD_DIR)); // 업로드 파일 서빙 (DATA_DIR 기준)
 
 app.use(session({
   secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),

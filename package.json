@@ -8,6 +8,9 @@
     "start": "node server.js",
     "dev": "node --watch server.js"
   },
+  "engines": {
+    "node": ">=24"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "ejs": "^3.1.10",

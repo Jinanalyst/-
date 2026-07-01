@@ -41,6 +41,31 @@ public/css, js     스타일 & 클라이언트 스크립트
 public/uploads/    업로드된 이미지·동영상
 ```
 
+## 배포 (Deploy)
+
+이 앱은 **항상 켜져 있는 Node 서버 + 로컬 파일(SQLite·업로드)** 구조라 Render·Railway 같은
+호스트에 적합합니다. (Vercel 같은 서버리스는 파일시스템이 읽기 전용이라 맞지 않습니다.)
+
+### Render (권장)
+1. 이 저장소를 GitHub에 푸시 (완료됨).
+2. [render.com](https://render.com) → **New +** → **Blueprint** → 이 저장소 선택.
+   `render.yaml` 을 자동으로 읽어 웹 서비스 + 영구 디스크(`/data`)를 구성합니다.
+   - 무료로 쓰려면 `render.yaml` 의 `plan: starter` 를 `free` 로 바꾸고 `disk:` 블록을 지우세요.
+     (무료 플랜은 디스크가 없어 재배포 시 데이터가 초기화됩니다.)
+3. 배포 완료 후 `https://<이름>.onrender.com` 접속.
+
+### Railway
+1. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**.
+2. 자동으로 `npm install` → `npm start` 실행. 데이터 유지가 필요하면 **Volume** 을 추가하고
+   마운트 경로를 환경변수 `DATA_DIR` 로 지정하세요 (예: `/data`).
+
+### 환경변수
+| 변수 | 설명 |
+|---|---|
+| `PORT` | 호스트가 자동 주입 (직접 설정 불필요) |
+| `DATA_DIR` | DB·업로드 저장 경로. 영구 디스크 경로로 지정하면 재배포에도 데이터 유지 |
+| `SESSION_SECRET` | 세션 서명 키. 재시작해도 로그인 유지하려면 고정값 지정 |
+
 ## 테스트 계정
 - 아이디 `seller01` / 비밀번호 `test1234`
 

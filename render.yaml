@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: jachwi-market
+    runtime: node
+    plan: starter          # 영구 디스크 사용을 위해 유료(starter) 필요. 무료로 쓰려면 이 줄을 free 로 바꾸고 아래 disk 블록을 지우세요.
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: DATA_DIR
+        value: /data          # 아래 disk 마운트 경로. DB와 업로드가 여기에 저장되어 재배포에도 유지됨
+      - key: SESSION_SECRET
+        generateValue: true    # 세션 서명용 시크릿 자동 생성
+    disk:
+      name: jachwi-data
+      mountPath: /data
+      sizeGB: 1

@@ -2,8 +2,13 @@
 // Node 24 내장 SQLite 사용 (네이티브 빌드 불필요)
 const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
+const fs = require('fs');
 
-const db = new DatabaseSync(path.join(__dirname, 'jachwi.db'));
+// 데이터 저장 위치: 배포 시 영구 디스크 경로(DATA_DIR)를 지정하면 재배포에도 데이터 유지
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+fs.mkdirSync(DATA_DIR, { recursive: true });
+
+const db = new DatabaseSync(path.join(DATA_DIR, 'jachwi.db'));
 
 db.exec(`
   PRAGMA journal_mode = WAL;
