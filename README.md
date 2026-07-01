@@ -12,7 +12,8 @@ npm start        # http://localhost:3000
 
 개발 중 자동 재시작: `npm run dev`
 
-> 데이터는 `jachwi.db` (SQLite, Node 24 내장 `node:sqlite`)에 저장됩니다. 네이티브 빌드가 필요 없습니다.
+> 로컬에서는 데이터가 `jachwi.db` (libSQL 파일 모드)에 저장되고, 업로드 파일은 `uploads/` 폴더에
+> 저장됩니다. 배포 시에는 환경변수만 넣으면 Turso(DB) · Vercel Blob(업로드)으로 자동 전환됩니다.
 
 ## 기능
 
@@ -27,47 +28,53 @@ npm start        # http://localhost:3000
 | 상점 / 마이페이지 | 판매자별 상점, 내 매물·찜 목록 |
 
 ## 기술 스택
-- **백엔드**: Node.js + Express, `node:sqlite`, express-session
+- **백엔드**: Node.js + Express (서버리스 호환), libSQL/Turso, cookie-session
 - **인증**: bcryptjs
-- **업로드**: multer (이미지/동영상, 개당 100MB)
+- **업로드**: 로컬은 디스크, 배포는 Vercel Blob(브라우저 직접 업로드로 대용량·동영상 지원)
 - **프론트**: EJS 서버 렌더링 + 바닐라 JS, Leaflet 지도
 
 ## 폴더 구조
 ```
-server.js          라우트·비즈니스 로직
-db.js              스키마 & DB 연결
+server.js          라우트·비즈니스 로직 (Express 앱 export)
+db.js              libSQL 연결 & 스키마
+api/index.js       Vercel 서버리스 진입점
+vercel.json        Vercel 라우팅
 views/             EJS 템플릿
 public/css, js     스타일 & 클라이언트 스크립트
-public/uploads/    업로드된 이미지·동영상
 ```
 
-## 배포 (Deploy)
+## Vercel 배포
 
-이 앱은 **항상 켜져 있는 Node 서버 + 로컬 파일(SQLite·업로드)** 구조라 Render·Railway 같은
-호스트에 적합합니다. (Vercel 같은 서버리스는 파일시스템이 읽기 전용이라 맞지 않습니다.)
+서버리스 환경에선 파일시스템에 쓸 수 없으므로 **DB는 Turso**, **업로드는 Vercel Blob**을 사용합니다.
 
-### Render (권장)
-1. 이 저장소를 GitHub에 푸시 (완료됨).
-2. [render.com](https://render.com) → **New +** → **Blueprint** → 이 저장소 선택.
-   `render.yaml` 을 자동으로 읽어 웹 서비스 + 영구 디스크(`/data`)를 구성합니다.
-   - 무료로 쓰려면 `render.yaml` 의 `plan: starter` 를 `free` 로 바꾸고 `disk:` 블록을 지우세요.
-     (무료 플랜은 디스크가 없어 재배포 시 데이터가 초기화됩니다.)
-3. 배포 완료 후 `https://<이름>.onrender.com` 접속.
+### 1) Turso 데이터베이스 만들기 (무료)
+```bash
+# https://turso.tech 가입 후 CLI 설치
+turso db create jachwi
+turso db show jachwi --url          # → TURSO_DATABASE_URL 값
+turso db tokens create jachwi       # → TURSO_AUTH_TOKEN 값
+```
+(CLI 없이 Turso 웹 대시보드에서 DB 생성 후 URL·토큰을 복사해도 됩니다.)
 
-### Railway
-1. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**.
-2. 자동으로 `npm install` → `npm start` 실행. 데이터 유지가 필요하면 **Volume** 을 추가하고
-   마운트 경로를 환경변수 `DATA_DIR` 로 지정하세요 (예: `/data`).
+### 2) Vercel 프로젝트 만들기
+1. [vercel.com](https://vercel.com) → **Add New → Project** → 이 GitHub 저장소 import.
+2. **Storage** 탭 → **Create Database → Blob** 생성 후 프로젝트에 연결.
+   → `BLOB_READ_WRITE_TOKEN` 환경변수가 자동으로 추가됩니다.
+3. **Settings → Environment Variables** 에 아래 값 추가 후 **Deploy**.
 
 ### 환경변수
-| 변수 | 설명 |
-|---|---|
-| `PORT` | 호스트가 자동 주입 (직접 설정 불필요) |
-| `DATA_DIR` | DB·업로드 저장 경로. 영구 디스크 경로로 지정하면 재배포에도 데이터 유지 |
-| `SESSION_SECRET` | 세션 서명 키. 재시작해도 로그인 유지하려면 고정값 지정 |
+| 변수 | 필수 | 설명 |
+|---|---|---|
+| `TURSO_DATABASE_URL` | ✅ | Turso DB URL (`libsql://...`) |
+| `TURSO_AUTH_TOKEN` | ✅ | Turso 인증 토큰 |
+| `BLOB_READ_WRITE_TOKEN` | ✅ | Vercel Blob 연결 시 자동 생성 |
+| `SESSION_SECRET` | ✅ | 세션 쿠키 서명용 임의 문자열 (예: `openssl rand -hex 32`) |
 
-## 테스트 계정
-- 아이디 `seller01` / 비밀번호 `test1234`
+> 이 4개가 모두 있어야 정상 동작합니다. `BLOB_READ_WRITE_TOKEN` 이 없으면 업로드 시 오류가 납니다.
+
+### (대안) Render / Railway
+항상 켜진 서버로 운영하려면 `render.yaml` 블루프린트로 Render에 배포할 수도 있습니다.
+이 경우 환경변수 없이 로컬 파일(SQLite·디스크)로 동작하며, 데이터 유지를 위해 영구 디스크(`DATA_DIR`)를 씁니다.
 
 ## 라이선스
 [MIT](LICENSE) © 2026 Jinanalyst

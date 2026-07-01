@@ -12,58 +12,93 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ---------- 등록 폼: 드래그앤드롭 업로드 + 미리보기 ----------
+// 배포(Vercel Blob) 시: 파일을 브라우저에서 Blob 으로 직접 업로드하고 URL 을 히든 필드로 제출
+// 로컬 개발 시: 기존처럼 file input(멀티파트)로 제출
 function setupDropzone() {
   const dz = document.getElementById('dropzone');
   const input = document.getElementById('mediaInput');
   const preview = document.getElementById('preview');
   if (!dz || !input || !preview) return;
-
+  const form = dz.closest('form');
   const MAX = 10;
-  const store = new DataTransfer(); // input.files 와 동기화되는 파일 저장소
+  const useBlob = window.__BLOB__ === true;
+  const items = []; // {file, kind, previewUrl, uploading, error, url}
+  let uploaderFn = null;
 
   const openPicker = () => input.click();
   dz.addEventListener('click', openPicker);
   dz.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPicker(); } });
-
-  ['dragenter', 'dragover'].forEach(ev =>
-    dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
-  ['dragleave', 'dragend', 'drop'].forEach(ev =>
-    dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
-
+  ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
+  ['dragleave', 'dragend', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
   dz.addEventListener('drop', e => addFiles(e.dataTransfer.files));
-  input.addEventListener('change', () => addFiles(input.files));
+  input.addEventListener('change', () => { addFiles(input.files); if (useBlob) input.value = ''; });
 
-  function addFiles(files) {
-    let skipped = false;
+  // 업로드 진행 중 제출 방지
+  if (form) form.addEventListener('submit', e => {
+    if (items.some(it => it.uploading)) { e.preventDefault(); alert('파일 업로드가 끝날 때까지 잠시 기다려주세요.'); }
+  });
+
+  async function getUploader() {
+    if (!uploaderFn) uploaderFn = (await import('https://esm.sh/@vercel/blob@2.5.0/client')).upload;
+    return uploaderFn;
+  }
+
+  async function addFiles(files) {
     for (const f of files) {
-      if (store.items.length >= MAX) { skipped = true; break; }
+      if (items.length >= MAX) { alert(`최대 ${MAX}개까지 업로드할 수 있습니다.`); break; }
       if (!/^(image|video)\//.test(f.type)) continue;
-      store.items.add(f);
+      const it = { file: f, kind: f.type.startsWith('video') ? 'video' : 'image', previewUrl: URL.createObjectURL(f), uploading: useBlob, error: false, url: null };
+      items.push(it);
+      render();
+      if (useBlob) {
+        try {
+          const upload = await getUploader();
+          const blob = await upload(f.name, f, { access: 'public', handleUploadUrl: '/api/upload-token', contentType: f.type });
+          it.url = blob.url;
+        } catch (err) { it.error = true; console.error(err); alert('업로드 실패: ' + f.name); }
+        it.uploading = false;
+        render(); syncHidden();
+      }
     }
-    input.files = store.files; // 실제 폼 제출에 반영
+    if (!useBlob) syncInput();
+  }
+
+  function syncInput() { // 로컬 모드: file input 동기화
+    const dt = new DataTransfer();
+    items.forEach(it => dt.items.add(it.file));
+    input.files = dt.files;
+  }
+
+  function syncHidden() { // Blob 모드: media_url / media_kind 히든 필드 재생성
+    if (!form) return;
+    form.querySelectorAll('.media-hidden').forEach(el => el.remove());
+    items.forEach(it => {
+      if (!it.url) return;
+      for (const [name, value] of [['media_url', it.url], ['media_kind', it.kind]]) {
+        const el = document.createElement('input');
+        el.type = 'hidden'; el.name = name; el.value = value; el.className = 'media-hidden';
+        form.appendChild(el);
+      }
+    });
+  }
+
+  function remove(i) {
+    items.splice(i, 1);
     render();
-    if (skipped) alert(`최대 ${MAX}개까지 업로드할 수 있습니다.`);
+    if (useBlob) syncHidden(); else syncInput();
   }
 
   function render() {
     preview.innerHTML = '';
-    [...store.files].forEach((file, i) => {
-      const url = URL.createObjectURL(file);
+    items.forEach((it, i) => {
       const box = document.createElement('div');
       box.className = 'p-item';
-      box.innerHTML = (file.type.startsWith('video')
-        ? `<video src="${url}" muted></video>`
-        : `<img src="${url}" alt="">`) +
-        `<button type="button" class="p-del" data-i="${i}" aria-label="삭제">×</button>`;
+      const media = it.kind === 'video' ? `<video src="${it.previewUrl}" muted></video>` : `<img src="${it.previewUrl}" alt="">`;
+      const overlay = it.uploading ? '<div class="p-loading">업로드중…</div>' : (it.error ? '<div class="p-loading err">실패</div>' : '');
+      box.innerHTML = media + overlay + `<button type="button" class="p-del" aria-label="삭제">×</button>`;
+      box.querySelector('.p-del').addEventListener('click', e => { e.stopPropagation(); remove(i); });
       preview.appendChild(box);
     });
-    preview.querySelectorAll('.p-del').forEach(btn =>
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        store.items.remove(Number(btn.dataset.i));
-        input.files = store.files;
-        render();
-      }));
   }
 }
 
@@ -124,7 +159,7 @@ function setupBrowseMap() {
   data.forEach(l => {
     if (l.lat == null || l.lng == null) return;
     bounds.push([l.lat, l.lng]);
-    const thumb = l.thumb ? `<img src="/uploads/${l.thumb}" style="width:100%;border-radius:6px;margin-bottom:6px">` : '';
+    const thumb = l.thumb ? `<img src="${l.thumb}" style="width:100%;border-radius:6px;margin-bottom:6px">` : '';
     L.marker([l.lat, l.lng]).addTo(map).bindPopup(
       `${thumb}<strong>${escapeHtml(l.title)}</strong><br>${l.category} · ${won(l.price)}<br>` +
       `<a href="/listings/${l.id}">자세히 보기 →</a>`

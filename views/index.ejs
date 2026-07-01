@@ -37,7 +37,7 @@
   <% listings.forEach(l => { %>
     <a class="card" href="/listings/<%= l.id %>">
       <div class="card-thumb">
-        <% if (l.thumb) { %><img src="/uploads/<%= l.thumb %>" alt="" loading="lazy"><% } else { %><div class="noimg">이미지 없음</div><% } %>
+        <% if (l.thumb) { %><img src="<%= l.thumb %>" alt="" loading="lazy"><% } else { %><div class="noimg">이미지 없음</div><% } %>
         <span class="status status-<%= l.status %>"><%= l.status %></span>
       </div>
       <div class="card-body">

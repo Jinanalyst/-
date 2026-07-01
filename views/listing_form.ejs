@@ -51,7 +51,7 @@
       <div class="preview-grid">
         <% images.forEach(m=>{ %>
           <label class="ex-item">
-            <% if (m.kind==='video'){ %><video src="/uploads/<%=m.filename%>" muted></video><% } else { %><img src="/uploads/<%=m.filename%>"><% } %>
+            <% if (m.kind==='video'){ %><video src="<%=m.src%>" muted></video><% } else { %><img src="<%=m.src%>"><% } %>
             <span class="del"><input type="checkbox" name="delete_media" value="<%=m.id%>"> 삭제</span>
           </label>
         <% }) %>

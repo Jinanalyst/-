@@ -4,10 +4,10 @@
     <div class="gallery">
       <% const imgs = media.filter(m=>m.kind==='image'); const vids = media.filter(m=>m.kind==='video'); %>
       <% if (imgs.length) { %>
-        <div class="gallery-main"><img id="mainImg" src="/uploads/<%= imgs[0].filename %>" alt="<%= listing.title %>"></div>
+        <div class="gallery-main"><img id="mainImg" src="<%= imgs[0].src %>" alt="<%= listing.title %>"></div>
         <% if (imgs.length>1) { %>
         <div class="thumbs">
-          <% imgs.forEach((m,i)=>{ %><img src="/uploads/<%=m.filename%>" class="<%=i===0?'active':''%>" onclick="document.getElementById('mainImg').src=this.src;document.querySelectorAll('.thumbs img').forEach(t=>t.classList.remove('active'));this.classList.add('active')"><% }) %>
+          <% imgs.forEach((m,i)=>{ %><img src="<%=m.src%>" class="<%=i===0?'active':''%>" onclick="document.getElementById('mainImg').src=this.src;document.querySelectorAll('.thumbs img').forEach(t=>t.classList.remove('active'));this.classList.add('active')"><% }) %>
         </div>
         <% } %>
       <% } else { %>
@@ -15,7 +15,7 @@
       <% } %>
 
       <% vids.forEach(m=>{ %>
-        <video class="detail-video" controls src="/uploads/<%= m.filename %>"></video>
+        <video class="detail-video" controls src="<%= m.src %>"></video>
       <% }) %>
     </div>
 
