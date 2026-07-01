@@ -1,0 +1,6 @@
+<%- include('partials/head') %>
+<h1 class="page-title">🗺️ 지도로 매물 찾기</h1>
+<p class="muted">핀을 클릭하면 매물 정보를 볼 수 있습니다. (위치가 등록된 매물 <%= listings.length %>건)</p>
+<div id="browseMap" class="browse-map"></div>
+<script id="mapData" type="application/json"><%- JSON.stringify(listings) %></script>
+<%- include('partials/foot') %>

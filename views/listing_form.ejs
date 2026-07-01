@@ -1,0 +1,75 @@
+<%- include('partials/head') %>
+<div class="form-card">
+  <h1><%= listing ? '매물 수정' : '매물 등록' %></h1>
+  <form method="post" action="<%= action %>" enctype="multipart/form-data">
+    <label>제목 <span class="req">*</span>
+      <input name="title" value="<%= listing ? listing.title : '' %>" placeholder="예: 자취방 원룸용 슬림 냉장고 (거의 새것)" required>
+    </label>
+
+    <div class="row">
+      <label>카테고리 <span class="req">*</span>
+        <select name="category" required>
+          <option value="">선택</option>
+          <% CATEGORIES.forEach(c=>{ %><option value="<%=c%>" <%=(listing&&listing.category===c)?'selected':''%>><%=c%></option><% }) %>
+        </select>
+      </label>
+      <label>상태
+        <select name="condition">
+          <option value="">선택</option>
+          <% CONDITIONS.forEach(c=>{ %><option value="<%=c%>" <%=(listing&&listing.condition===c)?'selected':''%>><%=c%></option><% }) %>
+        </select>
+      </label>
+      <label>가격 (원)
+        <input type="number" name="price" min="0" step="1000" value="<%= listing ? listing.price : 0 %>" placeholder="0 = 나눔">
+      </label>
+    </div>
+
+    <% if (listing) { %>
+    <label>거래상태
+      <select name="status">
+        <% STATUSES.forEach(s=>{ %><option value="<%=s%>" <%=listing.status===s?'selected':''%>><%=s%></option><% }) %>
+      </select>
+    </label>
+    <% } %>
+
+    <label>상세 설명
+      <textarea name="description" rows="6" placeholder="구매 시기, 사용 기간, 하자 여부, 직거래 가능 지역 등을 적어주세요."><%= listing ? (listing.description||'') : '' %></textarea>
+    </label>
+
+    <div class="field-label">사진 / 동영상 업로드</div>
+    <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="파일 업로드">
+      <input type="file" name="media" accept="image/*,video/*" multiple id="mediaInput" hidden>
+      <div class="dz-icon">🖼️</div>
+      <p class="dz-title">여기로 파일을 끌어다 놓거나 <span class="dz-browse">클릭해서 선택</span>하세요</p>
+      <p class="dz-sub">이미지·동영상 합쳐 최대 10개 · 개당 100MB</p>
+    </div>
+    <div id="preview" class="preview-grid"></div>
+
+    <% if (listing && images && images.length) { %>
+    <div class="existing-media">
+      <p class="muted">기존 미디어 (삭제하려면 체크)</p>
+      <div class="preview-grid">
+        <% images.forEach(m=>{ %>
+          <label class="ex-item">
+            <% if (m.kind==='video'){ %><video src="/uploads/<%=m.filename%>" muted></video><% } else { %><img src="/uploads/<%=m.filename%>"><% } %>
+            <span class="del"><input type="checkbox" name="delete_media" value="<%=m.id%>"> 삭제</span>
+          </label>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+    <fieldset class="map-field">
+      <legend>거래 희망 위치 (지도에서 클릭)</legend>
+      <input name="location_txt" id="locText" value="<%= listing ? (listing.location_txt||'') : '' %>" placeholder="지역명 (예: 신림역 2번 출구)">
+      <div id="pickMap" class="pick-map"></div>
+      <input type="hidden" name="lat" id="lat" value="<%= listing ? (listing.lat||'') : '' %>">
+      <input type="hidden" name="lng" id="lng" value="<%= listing ? (listing.lng||'') : '' %>">
+      <p class="muted small">지도를 클릭해 핀을 놓으면 좌표가 저장됩니다. "내 위치" 버튼으로 현재 위치를 사용할 수도 있어요.</p>
+      <button type="button" class="btn btn-sm" id="geoBtn">📍 내 위치 사용</button>
+    </fieldset>
+
+    <button class="btn btn-primary btn-block" type="submit"><%= listing ? '수정 완료' : '등록하기' %></button>
+  </form>
+</div>
+<%- include('partials/foot') %>

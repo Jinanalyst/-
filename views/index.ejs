@@ -1,0 +1,57 @@
+<%- include('partials/head') %>
+
+<section class="hero">
+  <h1>원룸 자취, 필요한 건 <span>자취마켓</span>에서</h1>
+  <p>이사 나가며 정리하는 가구부터 자취 필수템까지 — 사진·영상·지도로 확인하고 채팅으로 바로 거래하세요.</p>
+</section>
+
+<div class="filters">
+  <div class="cats">
+    <a href="/?<%= new URLSearchParams({...query, category:''}).toString() %>"
+       class="chip <%= !query.category ? 'active':'' %>">전체</a>
+    <% CATEGORIES.forEach(c => { %>
+      <a href="/?<%= new URLSearchParams({...query, category:c}).toString() %>"
+         class="chip <%= query.category===c ? 'active':'' %>"><%= c %></a>
+    <% }) %>
+  </div>
+  <form class="sortbar" method="get">
+    <% ['q'].forEach(k=>{ if(query[k]){ %><input type="hidden" name="<%=k%>" value="<%=query[k]%>"><% }}) %>
+    <% if(query.category){ %><input type="hidden" name="category" value="<%=query.category%>"><% } %>
+    <select name="status" onchange="this.form.submit()">
+      <option value="">거래상태 전체</option>
+      <% STATUSES.forEach(s=>{ %><option value="<%=s%>" <%=query.status===s?'selected':''%>><%=s%></option><% }) %>
+    </select>
+    <select name="sort" onchange="this.form.submit()">
+      <option value="new" <%=(!query.sort||query.sort==='new')?'selected':''%>>최신순</option>
+      <option value="price_low" <%=query.sort==='price_low'?'selected':''%>>낮은 가격순</option>
+      <option value="price_high" <%=query.sort==='price_high'?'selected':''%>>높은 가격순</option>
+      <option value="views" <%=query.sort==='views'?'selected':''%>>조회순</option>
+    </select>
+  </form>
+</div>
+
+<% if (listings.length === 0) { %>
+  <p class="empty">조건에 맞는 매물이 없습니다. 첫 매물을 등록해보세요!</p>
+<% } else { %>
+<div class="grid">
+  <% listings.forEach(l => { %>
+    <a class="card" href="/listings/<%= l.id %>">
+      <div class="card-thumb">
+        <% if (l.thumb) { %><img src="/uploads/<%= l.thumb %>" alt="" loading="lazy"><% } else { %><div class="noimg">이미지 없음</div><% } %>
+        <span class="status status-<%= l.status %>"><%= l.status %></span>
+      </div>
+      <div class="card-body">
+        <div class="cat"><%= l.category %></div>
+        <div class="ttl"><%= l.title %></div>
+        <div class="price"><%= won(l.price) %></div>
+        <div class="meta">
+          <span>📍 <%= l.location_txt || l.nickname %></span>
+          <span>💬 <%= l.comment_count %> · ♡ <%= l.fav_count %></span>
+        </div>
+      </div>
+    </a>
+  <% }) %>
+</div>
+<% } %>
+
+<%- include('partials/foot') %>

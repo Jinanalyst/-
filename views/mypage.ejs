@@ -1,0 +1,48 @@
+<%- include('partials/head') %>
+<h1 class="page-title">마이페이지</h1>
+<div class="profile-head">
+  <div>
+    <strong><%= user.nickname %></strong> <span class="muted">@<%= user.username %></span>
+    <% if (user.area) { %><div class="muted small">📍 <%= user.area %></div><% } %>
+  </div>
+  <a href="/listings/new" class="btn btn-primary">+ 새 매물 등록</a>
+</div>
+
+<h2 class="sec">내 판매 매물 (<%= myListings.length %>)</h2>
+<% if (myListings.length===0) { %><p class="empty">등록한 매물이 없습니다.</p><% } else { %>
+<div class="grid">
+  <% myListings.forEach(l=>{ %>
+    <a class="card" href="/listings/<%= l.id %>">
+      <div class="card-thumb">
+        <% if (l.thumb) { %><img src="/uploads/<%= l.thumb %>"><% } else { %><div class="noimg">이미지 없음</div><% } %>
+        <span class="status status-<%= l.status %>"><%= l.status %></span>
+      </div>
+      <div class="card-body">
+        <div class="ttl"><%= l.title %></div>
+        <div class="price"><%= won(l.price) %></div>
+        <div class="meta"><span>👁 <%= l.views %></span></div>
+      </div>
+    </a>
+  <% }) %>
+</div>
+<% } %>
+
+<h2 class="sec">찜한 매물 (<%= favs.length %>)</h2>
+<% if (favs.length===0) { %><p class="empty">찜한 매물이 없습니다.</p><% } else { %>
+<div class="grid">
+  <% favs.forEach(l=>{ %>
+    <a class="card" href="/listings/<%= l.id %>">
+      <div class="card-thumb">
+        <% if (l.thumb) { %><img src="/uploads/<%= l.thumb %>"><% } else { %><div class="noimg">이미지 없음</div><% } %>
+        <span class="status status-<%= l.status %>"><%= l.status %></span>
+      </div>
+      <div class="card-body">
+        <div class="ttl"><%= l.title %></div>
+        <div class="price"><%= won(l.price) %></div>
+        <div class="meta"><span><%= l.nickname %></span></div>
+      </div>
+    </a>
+  <% }) %>
+</div>
+<% } %>
+<%- include('partials/foot') %>

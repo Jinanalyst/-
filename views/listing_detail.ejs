@@ -1,0 +1,125 @@
+<%- include('partials/head') %>
+<div class="detail">
+  <div class="detail-main">
+    <div class="gallery">
+      <% const imgs = media.filter(m=>m.kind==='image'); const vids = media.filter(m=>m.kind==='video'); %>
+      <% if (imgs.length) { %>
+        <div class="gallery-main"><img id="mainImg" src="/uploads/<%= imgs[0].filename %>" alt="<%= listing.title %>"></div>
+        <% if (imgs.length>1) { %>
+        <div class="thumbs">
+          <% imgs.forEach((m,i)=>{ %><img src="/uploads/<%=m.filename%>" class="<%=i===0?'active':''%>" onclick="document.getElementById('mainImg').src=this.src;document.querySelectorAll('.thumbs img').forEach(t=>t.classList.remove('active'));this.classList.add('active')"><% }) %>
+        </div>
+        <% } %>
+      <% } else { %>
+        <div class="gallery-main noimg-lg">등록된 사진이 없습니다</div>
+      <% } %>
+
+      <% vids.forEach(m=>{ %>
+        <video class="detail-video" controls src="/uploads/<%= m.filename %>"></video>
+      <% }) %>
+    </div>
+
+    <div class="desc-block">
+      <h2>상품 설명</h2>
+      <p class="desc-text"><%= listing.description || '설명이 없습니다.' %></p>
+    </div>
+
+    <div class="comments" id="comments">
+      <h2>문의 <span class="count"><%= comments.length %></span></h2>
+      <% if (user) { %>
+      <form method="post" action="/listings/<%= listing.id %>/comments" class="comment-form">
+        <textarea name="body" rows="2" placeholder="판매자에게 궁금한 점을 물어보세요 (예: 직거래 가능 시간?)" required></textarea>
+        <button class="btn btn-primary btn-sm">등록</button>
+      </form>
+      <% } else { %><p class="muted"><a href="/login">로그인</a> 후 문의를 남길 수 있습니다.</p><% } %>
+
+      <ul class="comment-list">
+        <% const roots = comments.filter(c=>!c.parent_id); %>
+        <% roots.forEach(c=>{ %>
+          <li>
+            <div class="c-head">
+              <a href="/users/<%= c.user_id %>"><%= c.nickname %></a>
+              <% if (c.user_id===listing.seller_id) { %><span class="tag-seller">판매자</span><% } %>
+              <span class="muted small"><%= c.created_at %></span>
+              <% if (user && user.id===c.user_id) { %>
+                <form method="post" action="/comments/<%= c.id %>/delete" class="inline"><button class="linkbtn small">삭제</button></form>
+              <% } %>
+            </div>
+            <div class="c-body"><%= c.body %></div>
+            <% if (user) { %><button class="linkbtn small reply-btn" data-id="<%= c.id %>">답글</button><% } %>
+            <% comments.filter(r=>r.parent_id===c.id).forEach(r=>{ %>
+              <div class="c-reply">
+                <div class="c-head">
+                  <a href="/users/<%= r.user_id %>"><%= r.nickname %></a>
+                  <% if (r.user_id===listing.seller_id) { %><span class="tag-seller">판매자</span><% } %>
+                  <span class="muted small"><%= r.created_at %></span>
+                  <% if (user && user.id===r.user_id) { %>
+                    <form method="post" action="/comments/<%= r.id %>/delete" class="inline"><button class="linkbtn small">삭제</button></form>
+                  <% } %>
+                </div>
+                <div class="c-body"><%= r.body %></div>
+              </div>
+            <% }) %>
+            <% if (user) { %>
+            <form method="post" action="/listings/<%= listing.id %>/comments" class="reply-form" id="reply-<%= c.id %>" hidden>
+              <input type="hidden" name="parent_id" value="<%= c.id %>">
+              <textarea name="body" rows="1" placeholder="답글 달기" required></textarea>
+              <button class="btn btn-sm">답글 등록</button>
+            </form>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </div>
+
+  <aside class="detail-side">
+    <div class="side-card">
+      <div class="cat"><%= listing.category %><% if (listing.condition) { %> · <%= listing.condition %><% } %></div>
+      <h1 class="ttl"><%= listing.title %></h1>
+      <div class="price-lg"><%= won(listing.price) %></div>
+      <div class="status-line"><span class="status status-<%= listing.status %>"><%= listing.status %></span>
+        <span class="muted small">조회 <%= listing.views %> · <%= listing.created_at %></span></div>
+
+      <div class="seller">
+        <a href="/users/<%= listing.seller_id %>" class="seller-link">👤 <%= listing.nickname %></a>
+        <% if (listing.seller_area) { %><div class="muted small">📍 <%= listing.seller_area %></div><% } %>
+      </div>
+
+      <div class="actions">
+        <% if (user && user.id !== listing.seller_id) { %>
+          <button class="btn btn-fav <%= isFav?'on':'' %>" id="favBtn" data-id="<%= listing.id %>">
+            <span class="heart"><%= isFav?'♥':'♡' %></span> 찜 <span id="favCount"></span>
+          </button>
+        <% } %>
+      </div>
+
+      <% if (user && user.id !== listing.seller_id) { %>
+      <form method="post" action="/messages" class="dm-box">
+        <input type="hidden" name="receiver_id" value="<%= listing.seller_id %>">
+        <input type="hidden" name="listing_id" value="<%= listing.id %>">
+        <textarea name="body" rows="3" placeholder="판매자에게 1:1 쪽지 보내기" required></textarea>
+        <button class="btn btn-primary btn-block">💬 쪽지 보내기</button>
+      </form>
+      <% } else if (user && user.id === listing.seller_id) { %>
+      <div class="owner-tools">
+        <a class="btn btn-block" href="/listings/<%= listing.id %>/edit">수정</a>
+        <form method="post" action="/listings/<%= listing.id %>/delete" onsubmit="return confirm('정말 삭제할까요?')">
+          <button class="btn btn-danger btn-block">삭제</button>
+        </form>
+      </div>
+      <% } else { %>
+        <a href="/login" class="btn btn-primary btn-block">로그인하고 연락하기</a>
+      <% } %>
+    </div>
+
+    <% if (listing.lat && listing.lng) { %>
+    <div class="side-card">
+      <h3>거래 희망 위치</h3>
+      <% if (listing.location_txt) { %><p class="muted small">📍 <%= listing.location_txt %></p><% } %>
+      <div id="viewMap" class="view-map" data-lat="<%= listing.lat %>" data-lng="<%= listing.lng %>" data-title="<%= listing.title %>"></div>
+    </div>
+    <% } %>
+  </aside>
+</div>
+<%- include('partials/foot') %>

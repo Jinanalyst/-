@@ -1,0 +1,21 @@
+<%- include('partials/head') %>
+<h1 class="page-title">쪽지함</h1>
+<% if (threads.length===0) { %>
+  <p class="empty">아직 주고받은 쪽지가 없습니다.</p>
+<% } else { %>
+<ul class="thread-list">
+  <% threads.forEach(t=>{ %>
+    <li>
+      <a href="/messages/<%= t.other_id %>">
+        <div class="th-top">
+          <strong><%= t.other_nick %></strong>
+          <% if (t.unread>0) { %><span class="badge"><%= t.unread %></span><% } %>
+          <span class="muted small"><%= t.last_at %></span>
+        </div>
+        <div class="th-last muted"><%= t.last_body %></div>
+      </a>
+    </li>
+  <% }) %>
+</ul>
+<% } %>
+<%- include('partials/foot') %>

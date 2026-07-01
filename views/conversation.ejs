@@ -1,0 +1,21 @@
+<%- include('partials/head') %>
+<div class="conv">
+  <div class="conv-head">
+    <a href="/messages" class="back">← 쪽지함</a>
+    <h1><a href="/users/<%= other.id %>"><%= other.nickname %></a>님과의 대화</h1>
+  </div>
+  <div class="conv-body" id="convBody">
+    <% msgs.forEach(m=>{ %>
+      <div class="bubble <%= m.sender_id===user.id ? 'me' : 'them' %>">
+        <div class="b-text"><%= m.body %></div>
+        <div class="b-time"><%= m.created_at %></div>
+      </div>
+    <% }) %>
+  </div>
+  <form method="post" action="/messages" class="conv-form">
+    <input type="hidden" name="receiver_id" value="<%= other.id %>">
+    <input name="body" placeholder="메시지를 입력하세요" autocomplete="off" required autofocus>
+    <button class="btn btn-primary">보내기</button>
+  </form>
+</div>
+<%- include('partials/foot') %>
