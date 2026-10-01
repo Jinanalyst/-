@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PeerSwap – P2P Crypto Marketplace</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <a class="logo" href="#market">⇄ PeerSwap</a>
+    <nav>
+      <a href="#market" data-nav="market">Market</a>
+      <a href="#orders" data-nav="orders">My orders <span id="orderBadge" class="badge" hidden></span></a>
+      <a href="#wallet" data-nav="wallet">Wallet</a>
+    </nav>
+    <button class="btn ghost" id="postBtn">+ Post offer</button>
+  </div>
+</header>
+
+<div class="banner">Demo mode: balances, traders and payments are simulated. No real money or crypto moves.</div>
+
+<main class="wrap" id="app"></main>
+
+<div id="modal" class="modal" hidden><div class="sheet" id="sheet"></div></div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
